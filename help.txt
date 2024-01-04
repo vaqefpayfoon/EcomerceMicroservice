@@ -1,0 +1,33 @@
+dotnet --info
+dotnet new sln
+dotnet new webapi -o API
+dotnet sln add API
+dotnet new classlib -o Application
+dotnet sln add Application
+dotnet new classlib -o Domain
+dotnet sln add Domain
+dotnet new classlib -o Infrastructure
+dotnet sln add Infrastructure
+---------------------------------
+cd Infrastructure
+dotnet add reference ..\Domain\
+cd API
+dotnet add reference ..\Infrastructure\
+dotnet add reference ..\Application\
+---------------------------------
+dotnet dev-certs https --trust
+----------------------------------
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/vaqefpayfoon/CRM.git
+git push -u origin main
+---------------------------------
+dotnet tool update -g dotnetsay
+dotnet tool uninstall --global dotnet-ef
+dotnet tool install --global dotnet-ef
+
+dotnet ef migrations add Initial -p ../Infrastructure -s ../API -o Data/Migrations --context DataContext
+dotnet ef migrations remove -p ../Infrastructure -s ../API
+dotnet ef database update

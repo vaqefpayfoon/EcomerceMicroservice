@@ -1,0 +1,47 @@
+using eshop.Frontend.Web.IService;
+using eshop.Frontend.Web.Models;
+using eshop.Frontend.Web.Service.IService;
+using eshop.Frontend.Web.Utility;
+
+namespace eshop.Frontend.Web.Service
+{
+    public class AuthService : IAuthService
+{
+    private readonly IBaseService _baseService;
+    public AuthService(IBaseService baseService)
+    {
+        _baseService = baseService;
+    }
+
+    public async Task<ResponseDto> AssignRoleAsync(RegistrationRequestDto registrationRequestDto)
+    {
+        return await _baseService.SendAsync(new RequestDto()
+        {
+            ApiType = SD.ApiType.POST,
+            Data = registrationRequestDto,
+            Url = SD.AuthAPIBase + "/api/auth/AssignRole"
+        });
+    }
+
+    public async Task<ResponseDto> LoginAsync(LoginRequestDto loginRequestDto)
+    {
+        Console.WriteLine(SD.AuthAPIBase + "/api/auth/login");
+        return await _baseService.SendAsync(new RequestDto()
+        {
+            ApiType = SD.ApiType.POST,
+            Data = loginRequestDto,
+            Url = SD.AuthAPIBase + "/api/auth/login"
+        }, withBearer: false);
+    }
+
+    public async Task<ResponseDto> RegisterAsync(RegistrationRequestDto registrationRequestDto)
+    {
+        return await _baseService.SendAsync(new RequestDto()
+        {
+            ApiType = SD.ApiType.POST,
+            Data = registrationRequestDto,
+            Url = SD.AuthAPIBase + "/api/auth/register"
+        }, withBearer: false);
+    }
+}
+}
