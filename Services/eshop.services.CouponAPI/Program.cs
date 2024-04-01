@@ -11,7 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddDbContext<AppDbContext>(option => {
-    option.UseSqlite(builder.Configuration.GetConnectionString("CouponConnection"));
+    option.UseSqlServer(builder.Configuration.GetConnectionString("CouponConnectionMSSQL"));
 });
 
 IMapper mapper = MappingConfig.RegisterMaps().CreateMapper();

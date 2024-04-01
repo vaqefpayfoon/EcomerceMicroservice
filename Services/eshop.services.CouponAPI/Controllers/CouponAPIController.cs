@@ -11,7 +11,7 @@ namespace eshop.services.CouponAPI.Controller
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    // [Authorize]
     public class CouponAPIController : ControllerBase
     {
         private readonly AppDbContext _db;
