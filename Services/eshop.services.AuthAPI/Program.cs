@@ -2,8 +2,12 @@ using eshop.services.AuthAPI.Data;
 using eshop.services.AuthAPI.Models;
 using eshop.services.AuthAPI.Service;
 using eshop.services.AuthAPI.Service.IService;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Web;
+using Microsoft.Identity.Web.TokenCacheProviders.Distributed;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,9 +16,22 @@ builder.Services.AddDbContext<AppDbContext>(option =>
 {
     option.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
+
+var redis = ConnectionMultiplexer.Connect("localhost");
+        builder.Services.AddSingleton<IConnectionMultiplexer>(redis);
+
+        // Configure distributed token caches
+        // builder.Services.AddDistributedTokenCaches();
+
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("ApiSettings:JwtOptions"));
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
+
+// builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+//     .AddMicrosoftIdentityWebApp(builder.Configuration)
+//     .EnableTokenAcquisitionToCallDownstreamApi(new[] { "http://localhost:61538" })
+//     .AddDistributedTokenCaches();
+
 builder.Services.AddControllers();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<IAuthService, AuthService>();
