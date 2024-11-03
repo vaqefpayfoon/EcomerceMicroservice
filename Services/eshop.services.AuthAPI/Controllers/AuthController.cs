@@ -9,16 +9,12 @@ namespace eshop.services.AuthAPI.Controller
     public class AuthAPIController : ControllerBase
     {
         private readonly IAuthService _authService;
-        private readonly IConfiguration _configuration;
         protected ResponseDto _response;
-        public AuthAPIController(IAuthService authService, IConfiguration configuration)
+        public AuthAPIController(IAuthService authService)
         {
             _authService = authService;
-            _configuration = configuration;
             _response = new();
         }
-
-
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegistrationRequestDto model)
@@ -61,6 +57,19 @@ namespace eshop.services.AuthAPI.Controller
             }
             return Ok(_response);
 
+        }
+
+        [HttpGet("logout")]
+        public async Task<IActionResult> Logout(string userId)
+        {
+            await _authService.Logout(userId);
+            return Ok("Logged out successfully");
+        }
+
+        [HttpGet("GetAllDataAsync")]
+        public async Task<IActionResult> GetAllDataAsync()
+        {
+            return Ok(await _authService.GetAllDataAsync());
         }
 
 

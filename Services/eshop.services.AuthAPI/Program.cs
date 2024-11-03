@@ -11,33 +11,31 @@ using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+
+var redisConnectionString = builder.Configuration.GetSection("Redis")["ConnectionString"];
+builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConnectionString));
+
+builder.Services.AddDistributedTokenCaches();
+
+    
 builder.Services.AddDbContext<AppDbContext>(option =>
 {
     option.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
-var redis = ConnectionMultiplexer.Connect("localhost");
-        builder.Services.AddSingleton<IConnectionMultiplexer>(redis);
 
-        // Configure distributed token caches
-        // builder.Services.AddDistributedTokenCaches();
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("ApiSettings:JwtOptions"));
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
-// builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-//     .AddMicrosoftIdentityWebApp(builder.Configuration)
-//     .EnableTokenAcquisitionToCallDownstreamApi(new[] { "http://localhost:61538" })
-//     .AddDistributedTokenCaches();
 
 builder.Services.AddControllers();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

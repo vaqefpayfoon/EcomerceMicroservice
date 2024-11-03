@@ -12,14 +12,19 @@ namespace eshop.services.AuthAPI.Service
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IJwtTokenGenerator _jwtTokenGenerator;
+        private readonly ITokenService _tokenService;
+        private readonly SignInManager<ApplicationUser> _signInManager;
 
         public AuthService(AppDbContext db, IJwtTokenGenerator jwtTokenGenerator,
-            UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+            UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager,
+            ITokenService tokenService, SignInManager<ApplicationUser> signInManager)
         {
-                _db = db;
+            _db = db;
             _jwtTokenGenerator = jwtTokenGenerator;
             _userManager = userManager;
             _roleManager = roleManager;
+            _tokenService = tokenService;
+            _signInManager = signInManager;
         }
 
         public async Task<bool> AssignRole(string email, string roleName)
@@ -43,16 +48,26 @@ namespace eshop.services.AuthAPI.Service
         {
             var user = _db.ApplicationUsers.FirstOrDefault(u => u.UserName.ToLower() == loginRequestDto.UserName.ToLower());
 
-            bool isValid = await _userManager.CheckPasswordAsync(user,loginRequestDto.Password);
+            bool isValid = await _userManager.CheckPasswordAsync(user, loginRequestDto.Password);
 
-            if(user==null || isValid == false)
+
+            var result = await _signInManager.PasswordSignInAsync(loginRequestDto.UserName, loginRequestDto.Password, isPersistent: false, lockoutOnFailure: false);
+
+            if (user == null || isValid == false)
             {
-                return new LoginResponseDto() { User = null,Token="" };
+                return new LoginResponseDto() { User = null, Token = "" };
             }
-
+            if (!result.Succeeded)
+            {
+                return new LoginResponseDto() { User = null, Token = "" };
+            }
             //if user was found , Generate JWT Token
             var roles = await _userManager.GetRolesAsync(user);
-            var token = _jwtTokenGenerator.GenerateToken(user,roles);
+            var token = _jwtTokenGenerator.GenerateToken(user, roles);
+
+
+            await _tokenService.StoreTokenAsync(user.Id, token);
+
 
             UserDto userDTO = new()
             {
@@ -84,7 +99,7 @@ namespace eshop.services.AuthAPI.Service
 
             try
             {
-                var result =await  _userManager.CreateAsync(user,registrationRequestDto.Password);
+                var result = await _userManager.CreateAsync(user, registrationRequestDto.Password);
                 if (result.Succeeded)
                 {
                     var userToReturn = _db.ApplicationUsers.First(u => u.UserName == registrationRequestDto.Email);
@@ -111,6 +126,17 @@ namespace eshop.services.AuthAPI.Service
 
             }
             return "Error Encountered";
+        }
+
+        public async Task Logout(string userId)
+        {
+            await _signInManager.SignOutAsync();
+            await _tokenService.RemoveTokenAsync(userId);
+        }
+
+        public async Task<Dictionary<string, string>> GetAllDataAsync()
+        {
+            return await _tokenService.GetAllDataAsync();
         }
     }
 }
